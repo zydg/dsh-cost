@@ -1,0 +1,18 @@
+# dsh-cost — bundle patch layer.
+#
+# When this package is installed into a DSH profile (via
+# `dsh plugin --profile web add dsh-cost`, or manually), the
+# loader applies this patch over the profile's entry list, mounting the plugin
+# row. The `inject` list waits until fs / webServer / subprocess / credentials
+# / sandboxPolicy / agents are ready, so the /dsh-cost/api route
+# registers after the web server exists and the client panel works.
+- insert:
+    - id: dsh-cost
+      name: 'dsh-cost'
+      inject:
+        - fs
+        - webServer
+        - subprocess
+        - credentials
+        - sandboxPolicy
+        - agents
