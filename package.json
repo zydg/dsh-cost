@@ -1,6 +1,6 @@
 {
   "name": "dsh-cost",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "DeepSeek Harness 插件：统计当前话题每轮对话的 token 消耗、缓存命中率，按官方峰谷价格与每次调用时间估算费用，并展示 DeepSeek API 余额。",
   "keywords": [
     "deepseek",
