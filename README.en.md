@@ -23,9 +23,9 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
   | deepseek-v4-pro | Off-peak | 0.15 | 4.5 | 13.5 |
 
   The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average. Prices are configurable via `<workspace>/dsh-cost/pricing.json` (or the `setPrices` API action). The estimate is a **projection**, not the official bill.
-- **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` once per app load (refresh every 5 min) with your `DEEPSEEK_API_KEY` and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance.
+- **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` once per app load (refresh every 5 min) with your `DEEPSEEK_API_KEY` and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance. Every successful query writes a balance snapshot to `$DSH_HOME/dsh-cost/balance-history.json`; historical rounds show **the balance at that round** (latest snapshot at or before the round's end), falling back to the current balance when no snapshot exists.
 - **Historical turns included**: the footer is a `conversationEvents` projection (same mechanism as the built-in turn-tail / deliverables), so it replays for past turns when a session is opened.
-- **Persistence (host)**: every call record is stored in `<workspace>/dsh-cost/usage-records.json` (bounded at 200k records), available via the host API for future tooling.
+- **Persistence (host)**: data is written to the **session workspace** `dsh-cost/` directory first (sandbox-allowed, bound to the workspace rather than the host launch cwd): call records in `usage-records.json` (bounded at 200k), balance snapshots in `balance-history.json` (bounded at 50k), price overrides in `pricing.json`. Candidate order: workspace root → session cwd → probe path → `$DSH_HOME` (fallback). Legacy data left in other workspaces / the user home / `$DSH_HOME` is merged in automatically at startup (deduped by `time`).
 
 ## Single-file install on other machines
 

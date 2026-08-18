@@ -25,9 +25,9 @@
   | deepseek-v4-pro | 空闲 | 0.15 | 4.5 | 13.5 |
 
   费用按**每次调用自身的时间**判峰/谷逐次计价（而非按轮取平均）。价格可通过 `<工作区>/dsh-cost/pricing.json`（或 `setPrices` API）调整。费用为**估算值**，实际以 DeepSeek 官方账单为准。
-- **行尾余额**：使用 `DEEPSEEK_API_KEY` 请求 `GET https://api.deepseek.com/user/balance`（应用加载时查询一次，每 5 分钟刷新），在每行末尾追加 `余额 ¥…`；未配置 Key 时自动省略余额。
+- **行尾余额**：使用 `DEEPSEEK_API_KEY` 请求 `GET https://api.deepseek.com/user/balance`（应用加载时查询一次，每 5 分钟刷新），在每行末尾追加 `余额 ¥…`；未配置 Key 时自动省略余额。每次查询成功都会把余额快照写入 `$DSH_HOME/dsh-cost/balance-history.json`，历史轮次显示**该轮当时的余额**（取该轮结束前最近一次快照）；暂无快照的轮次回退显示当前余额。
 - **历史消息也生效**：统计行是 `conversationEvents` 投影（与官方 turn-tail / deliverables 同一机制），打开历史会话时会自动回放生成。
-- **持久化（宿主侧）**：每次调用记录写入 `<工作区>/dsh-cost/usage-records.json`（上限 20 万条），供后续工具使用。
+- **持久化（宿主侧）**：数据优先写入**会话工作区**的 `dsh-cost/` 目录（沙箱允许范围，绑定工作区而非宿主启动目录）：调用记录 `usage-records.json`（上限 20 万条）、余额快照 `balance-history.json`（上限 5 万条）、价格表 `pricing.json`。候选顺序：工作区根 → 会话 cwd → 探测路径 → `$DSH_HOME`（兜底）。散落在其他工作区 / 用户主目录 / `$DSH_HOME` 下的旧数据会在启动时自动并入（按 `time` 去重）。
 
 ## 单文件安装到其他终端
 
