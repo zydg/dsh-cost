@@ -24,6 +24,7 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 
   The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average. Prices are configurable via the `pricing` field of `<workspace>/dsh-cost/data.json` (or the `setPrices` API action). The estimate is a **projection**, not the official bill.
 - **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` with your `DEEPSEEK_API_KEY` **once per completed turn, whenever a footer line is emitted** (no fixed refresh interval; concurrent mounts such as history replay are coalesced into a single request) and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance. Every successful query writes a balance snapshot into `<workspace>/dsh-cost/data.json` (the same file as the call records); historical rounds show **the balance at that round** (the first snapshot taken after the round's end — the balance that round queried in real time), falling back to the current balance when no snapshot exists.
+- **Live balance bar above the input box**: shows **current balance + query timestamp** (e.g. `⚡ Current balance $1.66 · updated 16:07:03`), auto-refreshed on every successful balance query (i.e. at the end of each round); turns **red when the balance drops below a configurable threshold**. The threshold is set in the settings page (stored in CNY, converts automatically when the price unit changes; default ¥10).
 - **Historical turns included**: the footer is a `conversationEvents` projection (same mechanism as the built-in turn-tail / deliverables), so it replays for past turns when a session is opened.
 - **Persistence (host)**: data is written to the **session workspace** `dsh-cost/` directory first (sandbox-allowed, bound to the workspace rather than the host launch cwd): **call records, balance snapshots and price overrides all live in one file `data.json`** (shape `{version, records, balanceHistory, pricing}`; records bounded at 200k, balance snapshots bounded at 50k). Candidate order: workspace root → session cwd → probe path → `$DSH_HOME` (fallback). Legacy split files (`usage-records.json` / `balance-history.json` / `pricing.json`) left in other workspaces / the user home / `$DSH_HOME` are merged into the new file automatically at startup (deduped by `time`).
 
@@ -51,6 +52,7 @@ Settings → **dsh-cost settings** lets you switch:
 
 - **Display language**: 中文 / English (footer lines and the settings page switch live)
 - **Price unit**: CNY ¥ / USD $ (USD is converted with a configurable rate, default 1 CNY = 0.14 USD, approximate)
+- **Balance alert threshold**: the current balance above the input box turns red below this value (default ¥10, stored in CNY; the displayed/entered value converts automatically when the price unit changes)
 
 Settings persist in the browser's localStorage — no host or price-table changes needed.
 

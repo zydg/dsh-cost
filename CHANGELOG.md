@@ -1,5 +1,17 @@
 # Changelog / 更新日志
 
+## [0.0.3] - unreleased
+
+### 中文
+
+- 输入框上方新增**实时余额条**：显示当前余额与查询时间戳（如 `⚡ 当前余额 ¥11.85 · 更新于 16:07:03`），每次余额查询成功自动更新（每轮对话结束即刷新）。
+- 余额条**低余额红色告警**：余额低于设置页配置的阈值时显示为红色；阈值以 CNY 为基准存储（默认 ¥10），**切换价格单位（CNY/USD）时显示与输入自动换算**，并随汇率联动。
+
+### English
+
+- Added a **live balance bar above the input box**: shows current balance + query timestamp (e.g. `⚡ Current balance ¥11.85 · updated 16:07:03`), auto-updated on every successful balance query (i.e. at the end of each round).
+- **Low-balance warning**: the bar turns red below a configurable threshold (stored in CNY, default ¥10); the displayed/entered value **converts automatically when the price unit (CNY/USD) changes** and follows the exchange rate.
+
 ## [0.0.2] - 2026-08-18
 
 ### 中文
