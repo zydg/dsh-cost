@@ -4,12 +4,14 @@
 
 ### 中文
 
-- 余额历史快照：每次余额查询成功后持久化到 `$DSH_HOME/dsh-cost/balance-history.json`（默认 `~/.dsh/dsh-cost/`，上限 5 万条）；历史轮次的统计行显示**该轮当时的余额**（取轮次结束前最近一次快照），无快照时回退显示当前余额。
+- 余额刷新策略：从「应用加载时查询一次 + 每 5 分钟定时刷新」改为「**每轮对话完成、统计行输出时查询一次**」；历史回放等并发挂载合并为单次在途请求，不再有固定刷新间隔，余额最多滞后一轮。
+- 余额历史快照：每次余额查询成功后与调用记录一起持久化到**同一个文件** `<工作区>/dsh-cost/data.json`（上限 5 万条）；历史轮次的统计行显示**该轮当时的余额**（取该轮结束后第一次查询的快照，即该轮结束时实时查到的余额），无快照时回退显示当前余额。
 - 数据目录稳定化：调用记录 / 余额快照 / 价格表优先写入**会话工作区** `dsh-cost/`（沙箱允许范围，绑定工作区而非宿主启动目录），`$DSH_HOME` 作兜底；散落在其他工作区 / 用户主目录 / `$DSH_HOME` 下的旧数据启动时自动并入（按 `time` 去重）。
 
 ### English
 
-- Balance history snapshots: every successful balance query is persisted to `<workspace>/dsh-cost/balance-history.json` (bounded at 50k snapshots); historical rounds now show **the balance at that round** (latest snapshot at or before the round's end), falling back to the current balance when no snapshot exists.
+- Balance refresh policy: replaced the old "query once at app load + 5-minute timer" with **one fresh query per completed turn, whenever a footer line is emitted**; concurrent mounts (history replay) share a single in-flight request. No fixed refresh interval anymore — the balance is at most one round stale.
+- Balance history snapshots: every successful balance query is persisted together with the call records into **one file** `<workspace>/dsh-cost/data.json` (bounded at 50k snapshots); historical rounds now show **the balance at that round** (the first snapshot taken after the round's end — the balance that round queried in real time), falling back to the current balance when no snapshot exists.
 
 ## [0.0.1] - 2026-08-18
 

@@ -22,10 +22,10 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
   | deepseek-v4-pro | Peak | 0.30 | 9.0 | 27.0 |
   | deepseek-v4-pro | Off-peak | 0.15 | 4.5 | 13.5 |
 
-  The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average. Prices are configurable via `<workspace>/dsh-cost/pricing.json` (or the `setPrices` API action). The estimate is a **projection**, not the official bill.
-- **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` once per app load (refresh every 5 min) with your `DEEPSEEK_API_KEY` and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance. Every successful query writes a balance snapshot to `$DSH_HOME/dsh-cost/balance-history.json`; historical rounds show **the balance at that round** (latest snapshot at or before the round's end), falling back to the current balance when no snapshot exists.
+  The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average. Prices are configurable via the `pricing` field of `<workspace>/dsh-cost/data.json` (or the `setPrices` API action). The estimate is a **projection**, not the official bill.
+- **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` with your `DEEPSEEK_API_KEY` **once per completed turn, whenever a footer line is emitted** (no fixed refresh interval; concurrent mounts such as history replay are coalesced into a single request) and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance. Every successful query writes a balance snapshot into `<workspace>/dsh-cost/data.json` (the same file as the call records); historical rounds show **the balance at that round** (the first snapshot taken after the round's end — the balance that round queried in real time), falling back to the current balance when no snapshot exists.
 - **Historical turns included**: the footer is a `conversationEvents` projection (same mechanism as the built-in turn-tail / deliverables), so it replays for past turns when a session is opened.
-- **Persistence (host)**: data is written to the **session workspace** `dsh-cost/` directory first (sandbox-allowed, bound to the workspace rather than the host launch cwd): call records in `usage-records.json` (bounded at 200k), balance snapshots in `balance-history.json` (bounded at 50k), price overrides in `pricing.json`. Candidate order: workspace root → session cwd → probe path → `$DSH_HOME` (fallback). Legacy data left in other workspaces / the user home / `$DSH_HOME` is merged in automatically at startup (deduped by `time`).
+- **Persistence (host)**: data is written to the **session workspace** `dsh-cost/` directory first (sandbox-allowed, bound to the workspace rather than the host launch cwd): **call records, balance snapshots and price overrides all live in one file `data.json`** (shape `{version, records, balanceHistory, pricing}`; records bounded at 200k, balance snapshots bounded at 50k). Candidate order: workspace root → session cwd → probe path → `$DSH_HOME` (fallback). Legacy split files (`usage-records.json` / `balance-history.json` / `pricing.json`) left in other workspaces / the user home / `$DSH_HOME` are merged into the new file automatically at startup (deduped by `time`).
 
 ## Single-file install on other machines
 
@@ -118,7 +118,7 @@ dsh plugin --profile web add github:zydg/dsh-cost
 
 - Records contain only token/usage metadata (no message content, no API keys).
 - The API key is read through the harness `credentials` service and used only for `/user/balance`.
-- Usage data lives next to your workspace (`dsh-cost/`); delete `usage-records.json` to reset.
+- Usage data lives next to your workspace (`dsh-cost/`); delete `data.json` to reset.
 
 ## License
 
