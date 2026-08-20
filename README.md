@@ -4,6 +4,34 @@
 
 一个 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 插件：在**每轮对话（turn）的末尾自动追加一行统计**——本轮 token 消耗（输入/缓存命中/输出/推理）、**缓存命中率**、按**官方峰谷分时价格**并结合**本轮每一次调用的时间**估算的费用，行尾附 **DeepSeek API 余额**。
 
+## 安装
+
+本包声明了 `dsh.bundle`，一条命令即可从 GitHub 直装：
+
+```sh
+dsh plugin --profile web add github:zydg/dsh-cost
+```
+
+或手动安装到 profile 并接线：
+
+```sh
+cd ~/.dsh/profiles/web
+pnpm add github:zydg/dsh-cost
+# 然后在 package.json 的 dsh.profile.bundles 中追加 "dsh-cost
+```
+
+重启 Web 应用并刷新页面即可——没有标签页、没有面板，每轮对话末尾自动出现统计行。
+
+**💡 也可以直接告诉 AI**：在 DeepSeek Harness 的对话中直接说下面这句话，AI 会自动执行安装并重启：
+
+```sh
+帮我安装一下这个dsh plugin --profile web add github:zydg/dsh-cost并重启
+```
+
+安装、重启由 AI 自动完成；**刷新页面需要你手动操作**，刷新后即完成安装。
+
+> 共存提示：如果其他用量插件占用了 `/dsh-cost/api` 路由或 `cost-summary` 聊天节点键，请先移除。
+
 ## 功能
 
 - **每轮末尾一行字**：每轮助手回复结束后自动出现，例如：
@@ -24,29 +52,13 @@
   | deepseek-v4-pro | 高峰 | 0.30 | 9.0 | 27.0 |
   | deepseek-v4-pro | 空闲 | 0.15 | 4.5 | 13.5 |
 
-  费用按**每次调用自身的时间**判峰/谷逐次计价（而非按轮取平均）。价格可通过 `<工作区>/dsh-cost/data.json` 里的 `pricing` 字段（或 `setPrices` API）调整。费用为**估算值**，实际以 DeepSeek 官方账单为准。
+  费用按**每次调用自身的时间**判峰/谷逐次计价（而非按轮取平均）；**同一轮高峰/空闲调用并存时，时段显示「高峰+空闲」**，并按各自单价分别计价汇总。价格可通过 `<工作区>/dsh-cost/data.json` 里的 `pricing` 字段（或 `setPrices` API）调整，`resetPrices` 可随时恢复官方默认价。费用为**估算值**，实际以 DeepSeek 官方账单为准。
 - **行尾余额**：使用 `DEEPSEEK_API_KEY` 请求 `GET https://api.deepseek.com/user/balance`（**每轮对话完成、统计行输出时查询一次**，无固定刷新间隔；并发挂载如回放历史时合并为单次请求），在每行末尾追加 `余额 ¥…`；未配置 Key 时自动省略余额。每次查询成功都会把余额快照写入 `<工作区>/dsh-cost/data.json`（与调用记录同一个文件），历史轮次显示**该轮当时的余额**（取该轮结束后第一次查询的快照，即该轮结束时实时查到的余额）；暂无快照的轮次回退显示当前余额。
 - **输入框上方实时余额条**：显示**当前余额 + 查询时间戳**（如 `⚡ 当前余额 ¥11.85 · 更新于 16:07:03`），每次余额查询成功自动更新（每轮对话结束即刷新）；**余额低于可配置阈值时显示为红色**，阈值在设置页调整（以 CNY 为基准存储，切换价格单位时自动换算，默认 ¥10）。
 - **历史消息也生效**：统计行是 `conversationEvents` 投影（与官方 turn-tail / deliverables 同一机制），打开历史会话时会自动回放生成。
 - **持久化（宿主侧）**：数据优先写入**会话工作区**的 `dsh-cost/` 目录（沙箱允许范围，绑定工作区而非宿主启动目录）：**调用记录、余额快照、价格覆盖全部存进同一个文件 `data.json`**（结构 `{version, records, balanceHistory, pricing}`；调用记录上限 20 万条、余额快照上限 5 万条）。候选顺序：工作区根 → 会话 cwd → 探测路径 → `$DSH_HOME`（兜底）。散落在其他工作区 / 用户主目录 / `$DSH_HOME` 下的旧格式数据（`usage-records.json` / `balance-history.json` / `pricing.json`）会在启动时自动并入新文件（按 `time` 去重）。
-
-## 单文件安装到其他终端
-
-把发布产物 `dsh-cost-0.0.1.tgz`（`npm pack` 生成）拷到目标机器，在任意目录执行：
-
-```sh
-dsh plugin --profile web add ./dsh-cost-0.0.1.tgz
-```
-
-`dsh plugin` 会自动把该依赖安装进 profile 的 node_modules，并把 `dsh-cost` 追加到 `dsh.profile.bundles`（本包声明了 `dsh.bundle.patch`）。随后重启 `dsh web` 并刷新页面即可。
-
-手动方式（不走 `dsh plugin` 时）：
-
-```sh
-cd ~/.dsh/profiles/web
-pnpm add file:./dsh-cost-0.0.1.tgz
-# 然后在 package.json 的 dsh.profile.bundles 里追加 "dsh-cost
-```
+- **导出调用记录**：通过 `/dsh-cost/api` 的 `export` 操作，将全部调用记录导出为 **CSV / JSON** 文件到 `<工作区>/dsh-cost/`（文件名如 `dsh-cost-20260820-091530.csv`），便于离线分析。
+- **一键清空记录**：`clear` 操作清空全部调用记录（余额快照与价格覆盖保留）。
 
 ## 国际化设置（设置页）
 
@@ -62,26 +74,6 @@ pnpm add file:./dsh-cost-0.0.1.tgz
 
 - DeepSeek Harness Web/桌面 profile（Node.js ≥ 18）。
 - 余额显示需要在 Harness「设置 → 模型」中配置 DeepSeek API Key（`DEEPSEEK_API_KEY`）。
-
-## 安装
-
-本包声明了 `dsh.bundle`，一条命令即可从 GitHub 直装：
-
-```sh
-dsh plugin --profile web add github:zydg/dsh-cost
-```
-
-或手动安装到 profile 并接线：
-
-```sh
-cd ~/.dsh/profiles/web
-pnpm add github:zydg/dsh-cost
-# 然后在 package.json 的 dsh.profile.bundles 中追加 "dsh-cost
-```
-
-重启 Web 应用并刷新页面即可——没有标签页、没有面板，每轮对话末尾自动出现统计行。
-
-> 共存提示：如果其他用量插件占用了 `/dsh-cost/api` 路由或 `cost-summary` 聊天节点键，请先移除。
 
 ## 工作原理
 
@@ -111,12 +103,6 @@ pnpm add github:zydg/dsh-cost
 - 费用估算依据 **DeepSeek 官方峰谷分时价格表**（费用查询口径），并按每次调用的实际时间逐次计价；估算结果**仅供参考**，实际费用以 DeepSeek 官方账单为准。
 - 余额查询调用 DeepSeek 官方接口 `GET https://api.deepseek.com/user/balance`，API Key 与对话模型**共用同一个 Key**（`DEEPSEEK_API_KEY`）。
 - 余额接口可能因服务端延迟导致展示滞后，**余额数据仅供参考**，不构成账户可用额度的承诺。
-
-### 一键安装
-
-```sh
-dsh plugin --profile web add github:zydg/dsh-cost
-```
 
 ## 数据与隐私
 
