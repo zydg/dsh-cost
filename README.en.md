@@ -41,7 +41,7 @@ The install and restart are done by the AI; **refreshing the page is a manual st
   (Chinese default: `⚡ 本轮 #4 · 输入 188,843 · 缓存命中 6,494,464 · 输出 24,057 · 命中率 97.2% · 时段 高峰 · 预估 ¥1.4325 · 余额 ¥12.34`)
 
 - **Cache hit rate**: `cache-read tokens / (cache-read + cache-miss input tokens)`, computed per turn from the live event stream.
-- **Official peak/off-peak pricing**: DeepSeek-V4 series uses 峰谷分时计价 (effective 2026-08-17 00:00 Beijing time). Peak windows: daily **09:00–12:00 and 14:00–18:00 (Beijing time)**; peak prices are double the off-peak prices. Default price table (元/1M tokens):
+- **Official peak/off-peak pricing**: DeepSeek-V4 series uses 峰谷分时计价 (effective 2026-08-17 00:00 Beijing time). Peak windows: daily **09:00–12:00 and 14:00–18:00 (Beijing time)**; peak prices are double the off-peak prices; **starting 2026-08-23 00:00 (Beijing time), Saturdays and Sundays are billed at the off-peak rate all day**. Default price table (元/1M tokens):
 
   | Model | Period | Input cache hit | Input cache miss | Output |
   |---|---|---|---|---|
@@ -50,7 +50,7 @@ The install and restart are done by the AI; **refreshing the page is a manual st
   | deepseek-v4-pro | Peak | 0.30 | 9.0 | 27.0 |
   | deepseek-v4-pro | Off-peak | 0.15 | 4.5 | 13.5 |
 
-  The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average; a turn with **both peak and off-peak calls shows 「Peak+off-peak」** and is priced per period. Prices are configurable via the `pricing` field of `<workspace>/dsh-cost/data.json` (or the `setPrices` API action) and can be restored with `resetPrices`. The estimate is a **projection**, not the official bill.
+  The estimate prices **each call by its own timestamp** (`isPeak(time)`), not by the turn average; a turn with **both peak and off-peak calls shows 「Peak+off-peak」** and is priced per period; **weekend calls are billed at the off-peak rate** (the price table's `weekendOffPeak` flag, on by default — Sat/Sun are always off-peak). Prices are configurable via the `pricing` field of `<workspace>/dsh-cost/data.json` (or the `setPrices` API action) and can be restored with `resetPrices`. The estimate is a **projection**, not the official bill.
 - **Balance at the end of the line**: queries `GET https://api.deepseek.com/user/balance` with your `DEEPSEEK_API_KEY` **once per completed turn, whenever a footer line is emitted** (no fixed refresh interval; concurrent mounts such as history replay are coalesced into a single request) and appends `余额 ¥…` to each footer line. No API key configured → the line simply omits the balance. Every successful query writes a balance snapshot into `<workspace>/dsh-cost/data.json` (the same file as the call records); historical rounds show **the balance at that round** (the first snapshot taken after the round's end — the balance that round queried in real time), falling back to the current balance when no snapshot exists.
 - **Live balance bar above the input box**: shows **current balance + query timestamp** (e.g. `⚡ Current balance $1.66 · updated 16:07:03`), auto-refreshed on every successful balance query (i.e. at the end of each round); turns **red when the balance drops below a configurable threshold**. The threshold is set in the settings page (stored in CNY, converts automatically when the price unit changes; default ¥10).
 - **Historical turns included**: the footer is a `conversationEvents` projection (same mechanism as the built-in turn-tail / deliverables), so it replays for past turns when a session is opened.

@@ -1,5 +1,17 @@
 # Changelog / 更新日志
 
+## [0.0.4] - 2026-08-23
+
+### 中文
+
+- **周末低谷价**：自 2026-08-23 00:00（北京时间）起，周六/周日全天统一按低谷（空闲）时段价格计费；价格表新增 `weekendOffPeak` 开关（默认开启），可通过 `<工作区>/dsh-cost/data.json` 的 `pricing.weekendOffPeak` 或 `setPrices` API 关闭。`isPeak` 现在结合调用时间与星期判断高峰/低谷，费用估算随周末价自动生效。
+- 默认价格表生效日期 `effectiveAt` 同步更新为 `2026-08-23T00:00:00+08:00`。
+
+### English
+
+- **Weekend off-peak pricing**: effective 2026-08-23 00:00 (Beijing time), Saturdays/Sundays are billed at the off-peak rate all day; the price table gains a `weekendOffPeak` flag (on by default — disable via `pricing.weekendOffPeak` in `<workspace>/dsh-cost/data.json` or the `setPrices` API). `isPeak` now also considers the weekday, so estimates follow the weekend rate automatically.
+- The default pricing `effectiveAt` is updated to `2026-08-23T00:00:00+08:00`.
+
 ## [0.0.3] - 2026-08-18
 
 ### 中文
