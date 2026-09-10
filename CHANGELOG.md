@@ -1,5 +1,23 @@
 # Changelog / 更新日志
 
+## [0.0.5] - 2026-09-10
+
+### 中文
+
+- **新模型 DeepSeek-V4.1-Flash**：默认价格表新增 `deepseek-flash` 计费桶（原 `deepseek-v4-flash` 桶移除）；`modelKey` 仍按 `flash` 关键字匹配，因此新模型名 `deepseek-flash` 及旧名 `deepseek-v4-flash`、`deepseek-v4-flash-vision-exp`（均已下线，请求由 V4.1 Flash 提供服务）统一按 Flash 价格计费。
+- **Flash 系列降价**：北京时间 2026-09-10 12:00 起，空闲时段 输入·缓存命中 **¥0.02** / 输入·缓存未命中 **¥1** / 输出 **¥4**（元/百万 tokens），高峰时段为空闲时段的两倍（¥0.04 / ¥2 / ¥8）；默认价格表生效日期 `effectiveAt` 更新为 `2026-09-10T12:00:00+08:00`。
+- **V4 Pro 有序下线路由**：价格表新增 `proRoute` 字段（默认 `{at: '2026-09-14T12:00:00+08:00', to: 'deepseek-flash'}`）。自北京时间 2026-09-14 12:00 起至 V4.1 Pro 上线前，`deepseek-v4-pro` 的请求全部路由到 V4.1 Flash，费用按 **V4.1 Flash 单价**估算；新增导出函数 `billedModelKey()`，宿主与客户端计价逻辑保持一致，`setPrices` 亦可覆盖 `proRoute`。
+- 峰谷规则确认不变：高峰时段为北京时间**周一至周五** 09:00–12:00、14:00–18:00，其余时间（含周六/周日全天）为空闲时段。
+- 兼容性提示：若 `data.json` 中存在旧 key `deepseek-v4-flash` 的自定义价格覆盖，升级后将不再被读取（该桶已更名为 `deepseek-flash`），如需保留自定义价请用 `setPrices` 重新设置，或用 `resetPrices` 恢复官方默认价。
+
+### English
+
+- **New model DeepSeek-V4.1-Flash**: the default price table now has a `deepseek-flash` bucket (the old `deepseek-v4-flash` bucket is gone). `modelKey` still matches on the `flash` keyword, so the new name `deepseek-flash` and the legacy names `deepseek-v4-flash` / `deepseek-v4-flash-vision-exp` (both retired, now served by V4.1 Flash) are all billed at the Flash price.
+- **Flash price cut**: effective 12:00 Beijing time on 2026-09-10, off-peak rates are **¥0.02** input cache hit / **¥1** input cache miss / **¥4** output (元 per 1M tokens), with peak rates at double (¥0.04 / ¥2 / ¥8); the default `effectiveAt` is now `2026-09-10T12:00:00+08:00`.
+- **Orderly V4 Pro retirement routing**: the price table gains a `proRoute` field (default `{at: '2026-09-14T12:00:00+08:00', to: 'deepseek-flash'}`). From 12:00 Beijing time on 2026-09-14 until V4.1 Pro ships, `deepseek-v4-pro` requests are routed to V4.1 Flash and estimated at the **V4.1 Flash price**; the new exported `billedModelKey()` keeps host and client costing in sync, and `setPrices` can override `proRoute`.
+- Peak rules are unchanged: peak means **Monday–Friday** 09:00–12:00 and 14:00–18:00 Beijing time; every other hour (including all weekend) is off-peak.
+- Compatibility note: a custom price override stored under the old `deepseek-v4-flash` key in `data.json` is no longer read after this upgrade (the bucket was renamed to `deepseek-flash`); re-apply it with `setPrices`, or use `resetPrices` to restore the official defaults.
+
 ## [0.0.4] - 2026-08-23
 
 ### 中文
