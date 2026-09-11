@@ -1,5 +1,27 @@
 # Changelog / 更新日志
 
+## [0.0.6] - 2026-09-11
+
+### 中文
+
+- **模型名自动同步**：新增官方模型清单同步（`GET https://api.deepseek.com/models`）。插件启动后自动同步一次；24 小时 TTL 内复用缓存；统计到**清单外的模型名**（官方上新）时再自动同步一次，最小间隔 10 分钟以免频繁请求；也可在设置页点「立即同步」（`syncModels`）。同步失败只记录原因，不影响计价与其余功能。新增导出 `parseModels()` / `catalogStale()` / `mergeCatalogIds()` 与常量 `MODEL_CATALOG_TTL_MS` / `MODEL_CATALOG_MIN_GAP_MS`。
+- **旧模型名归一（`MODEL_ALIASES`）**：`deepseek-v4-flash`、`deepseek-v4-flash-vision-exp`、`deepseek-chat` → `deepseek-flash` 计价桶；`deepseek-reasoner` → `deepseek-v4-pro` 计价桶。`modelKey` 现在先去空格、转小写，精确别名优先、关键字兜底，因此 `deepseek-flash-2` / `deepseek-v4-pro-2` 这类未来名字仍能正确归桶。宿主与客户端各有一份别名表，由自检脚本断言两者完全一致。
+- **「价格未收录」提示**：`list` 返回的每条记录新增 `modelPriced` / `modelListed` 字段；价格表里找不到的模型名，统计行会追加 `⚠ 价格未收录（按 ¥0 估算）`，避免把「没有价格」误当成「免费」。
+- **设置页新增「官方模型清单（自动同步）」**：显示上次同步时间、已同步的模型名列表和「立即同步」按钮；未配置 Key 或同步失败时显示原因。
+- **持久化**：`data.json` 增加 `modelCatalog: { ids, fetchedAt }`（旧文件无需迁移，缺该字段按未同步处理）。
+- **接口白名单**：新增 `API_PATHS`（`/user/balance`、`/models`），只允许访问这两个官方接口；余额与模型清单复用同一个 `DEEPSEEK_API_KEY`。
+- **测试**：新增 `test/selftest.mjs`（21 项断言：峰谷计价、周末低谷、V4 Pro 路由、旧名归一、清单解析/TTL/合并、宿主与客户端别名表及价格表一致性）与 `test/smoke.mjs`（6 项：`apply` 挂载、路由注册、`list`/`syncModels`/`balance`/未知 action 的返回形状与降级、`llm/stream` 监听），`npm test` 一键运行。
+
+### English
+
+- **Automatic model-name sync**: the plugin now syncs the official model list (`GET https://api.deepseek.com/models`) — once at startup, cached for 24 hours, and again whenever a call shows a **model name outside the list** (a fresh release; minimum gap 10 minutes so it never hammers the API). A **Sync now** button in the settings page (action `syncModels`) forces a refresh. Failures only record a reason and never affect costing. New exports `parseModels()` / `catalogStale()` / `mergeCatalogIds()` and constants `MODEL_CATALOG_TTL_MS` / `MODEL_CATALOG_MIN_GAP_MS`.
+- **Retired-name normalisation (`MODEL_ALIASES`)**: `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp` and `deepseek-chat` → the `deepseek-flash` bucket; `deepseek-reasoner` → `deepseek-v4-pro`. `modelKey` now trims and lowercases, prefers exact aliases and falls back to keywords, so future ids such as `deepseek-flash-2` / `deepseek-v4-pro-2` still land in the right bucket. Host and client each carry a copy of the alias table and the self-test asserts they are identical.
+- **"Price not in table" marker**: every record returned by `list` gains `modelPriced` / `modelListed`; when a model has no price the footer line appends `⚠ Price not in table (counted as 0)` instead of silently looking free.
+- **New settings row "Official model list (auto-sync)"**: last sync time, the synced model names and a **Sync now** button; a missing key or a failed sync shows the reason.
+- **Persistence**: `data.json` gains `modelCatalog: { ids, fetchedAt }` (no migration needed — a missing field simply means "not synced yet").
+- **Endpoint allow-list**: new `API_PATHS` (`/user/balance`, `/models`) restricts outbound calls to those two official endpoints; balance and model list share the same `DEEPSEEK_API_KEY`.
+- **Tests**: new `test/selftest.mjs` (21 assertions: peak/off-peak pricing, weekend off-peak, V4 Pro routing, retired-name mapping, catalogue parsing/TTL/merge, host↔client alias and price-table parity) and `test/smoke.mjs` (6 checks: `apply` mounting, route registration, response shapes and graceful degradation for `list`/`syncModels`/`balance`/unknown actions, `llm/stream` listener). Run both with `npm test`.
+
 ## [0.0.5] - 2026-09-10
 
 ### 中文

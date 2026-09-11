@@ -1,7 +1,7 @@
 {
   "name": "dsh-cost",
-  "version": "0.0.5",
-  "description": "DeepSeek Harness 插件：统计当前话题每轮对话的 token 消耗、缓存命中率，按 DeepSeek 官方峰谷分时价格（V4.1 Flash / V4 Pro 定价与路由）与每次调用时间估算费用，并展示 DeepSeek API 余额。",
+  "version": "0.0.6",
+  "description": "DeepSeek Harness 插件：统计当前话题每轮对话的 token 消耗、缓存命中率，按 DeepSeek 官方峰谷分时价格（V4.1 Flash / V4 Pro 定价与路由）与每次调用时间估算费用，自动同步官方模型名清单，并展示 DeepSeek API 余额。",
   "keywords": [
     "deepseek",
     "harness",
@@ -43,8 +43,12 @@
       ]
     }
   },
+  "scripts": {
+    "test": "node test/selftest.mjs && node test/smoke.mjs"
+  },
   "files": [
     "lib",
+    "test",
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
