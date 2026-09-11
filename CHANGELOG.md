@@ -1,5 +1,23 @@
 # Changelog / 更新日志
 
+## [0.0.7] - 2026-09-11
+
+### 中文
+
+- **设置页新增「模型与价格」编辑器**：可在 设置 → dsh-cost 设置 里手动管理价格表——添加/删除模型、编辑模型名与显示名，分别设置**高峰**与**空闲**的「缓存命中 / 缓存未命中 / 输出」三档单价（元/百万 tokens），并提供「周六/周日全天按低谷价」开关。保存后按每次调用时间逐次计价，已打开的统计行立即用新价重算。
+- **高峰时段可手动编辑**：可添加/删除高峰时段并编辑每段的开始与结束时间（`HH:MM`，北京时间）；保存时校验 `0 ≤ 开始 < 结束 ≤ 1440` 并自动排序；**全部删除表示全天低谷**。`isPeak()` 语义修正为：显式传入数组（含空数组 `[]`）即以此为准，仅未传时才回退默认时段。
+- **新增 `setPrices` 整表模式**：`setPrices` 支持 `replaceModels: true`，一次提交完整模型表（支持新增/删除/改显示名/改价）；旧的局部更新语义保留（更新已有模型、按需新增未知键）。新增 `normalizeModelTable()` / `normalizeModelRates()` / `normalizePeakWindows()` 做校验与归一。`applyPricing` 支持整表恢复，重启后自定义模型与高峰时段不丢失。
+- **兼容性修复**：客户端会话事件注册表改用当前 DSH 的 `ctx.uiConversation.events.register(...)`（原 `ctx.conversationEvents` 已不存在，会导致客户端半边被 `inject` 门控而整体不加载）。
+- **测试**：新增 `test/pricing.mjs`（14 项：`replaceModels` 整表替换/删除、空表拒绝、非法价格归零、旧接口兼容、`isPeak` 默认/空数组/自定义窗口、非法时段拒绝、跨重启恢复模型表与高峰时段、`resetPrices`），`npm test` 一并运行。
+
+### English
+
+- **New "Models & prices" editor in the settings page**: from Settings → dsh-cost settings you can manage the price table by hand — add/remove models, edit the model id and label, and set the peak and off-peak **cache-hit / cache-miss / output** rates (CNY per 1M tokens), plus a "Saturday/Sunday all off-peak" toggle. Saving prices each call by its own timestamp, and open footer lines re-render with the new prices immediately.
+- **Peak windows are editable**: add/remove peak windows and edit each window's start and end time (`HH:MM`, Beijing time). The host validates `0 ≤ start < end ≤ 1440` and sorts them; **removing every window means all-day off-peak**. `isPeak()` semantics were fixed: an explicit array (including `[]`) now wins, and only an absent value falls back to the default windows.
+- **New whole-table `setPrices` mode**: `setPrices` accepts `replaceModels: true` to submit the complete model table in one call (add / remove / relabel / reprice). The legacy partial-update semantics are preserved. New validators `normalizeModelTable()` / `normalizeModelRates()` / `normalizePeakWindows()`; `applyPricing` restores the whole table so custom models and peak windows survive a restart.
+- **Compatibility fix**: the client now registers conversation events through the current DSH service `ctx.uiConversation.events.register(...)` (the old `ctx.conversationEvents` no longer exists, which left the whole client half gated by `inject` and never loaded).
+- **Tests**: new `test/pricing.mjs` (14 checks: `replaceModels` add/remove, empty-table rejection, invalid rates clamped to 0, legacy-update compatibility, `isPeak` default/empty/custom windows, invalid-window rejection, restore of models and peak windows across a restart, `resetPrices`), run by `npm test`.
+
 ## [0.0.6] - 2026-09-11
 
 ### 中文
